@@ -1,0 +1,14 @@
+{
+  "name": "finbytes",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @finbytes/web dev",
+    "build": "pnpm --filter @finbytes/web build",
+    "start": "pnpm --filter @finbytes/web start"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
+
+

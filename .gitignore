@@ -1,0 +1,22 @@
+```gitignore
+node_modules/
+.pnpm-store/
+dist/
+
+# Environment files — never commit real secrets
+.env
+.env.*.local
+!.env.example
+
+# Prisma generated client
+backend/node_modules/.prisma/
+
+# Editor/OS
+.vscode/settings.json
+.vscode/launch.json
+!.vscode/extensions.json
+.DS_Store
+
+*.log
+*.tsbuildinfo
+coverage/

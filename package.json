@@ -1,0 +1,21 @@
+{
+  "name": "finbytes-platform",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Finbytes Media & Research Platform — Monorepo Root",
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d",
+    "migrate:dev": "pnpm --filter @finbytes/backend migrate:dev",
+    "migrate:deploy": "pnpm --filter @finbytes/backend migrate:deploy",
+    "seed": "pnpm --filter @finbytes/backend seed",
+    "studio": "pnpm --filter @finbytes/backend prisma:studio",
+    "dev": "pnpm --filter @finbytes/backend dev & pnpm --filter @finbytes/web dev",
+    "build": "pnpm --filter @finbytes/backend build && pnpm --filter @finbytes/web build",
+    "start": "pnpm --filter @finbytes/web start"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

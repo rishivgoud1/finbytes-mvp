@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "Prisma.prisma",
+    "ms-azuretools.vscode-docker",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "Pkief.markdown-checkbox"
+  ]
+}

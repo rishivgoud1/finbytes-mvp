@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // The 'url' property is no longer used here for newer versions
+}
+
+// ─── Enums ─────────────────────────────────────────────────
+
+enum RoleName {
+  VIEWER
+  CONTRIBUTOR_RESEARCHER
+  CONTRIBUTOR_EDITOR
+  ADMIN
+}
+
+enum ArticleStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+// ─── MODEL: Users ──────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userRoles UserRole[]
+  articles  Article[]  @relation("ArticleAuthor")
+
+  @@index([email])
+  @@map("users")
+}
+
+// ─── MODEL: Roles (RBAC) ─────────────────────────────────────
+
+model Role {
+  id          String   @id @default(cuid())
+  name        RoleName @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  userRoles UserRole[]
+
+  @@map("roles")
+}
+
+// User <-> Role many-to-many join table
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+// ─── MODEL: Articles ──────────────────────────────────────────
+
+model Article {
+  id        String        @id @default(cuid())
+  title     String
+  subtitle  String?
+  body      String        @db.Text
+  status    ArticleStatus @default(DRAFT)
+  authorId  String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  author User @relation("ArticleAuthor", fields: [authorId], references: [id])
+
+  @@index([authorId])
+  @@index([status])
+  @@map("articles")
+}
