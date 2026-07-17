@@ -2,12 +2,26 @@ import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
 
-// Load RSA keys from your secure keys directory
-const privateKeyPath = path.join(__dirname, '../../.keys/private.pem');
-const publicKeyPath = path.join(__dirname, '../../.keys/public.pem');
+// Load RSA keys from the app's .keys directory.
+// Checks several candidate locations so it works in dev (tsx), the old
+// tsc layout (dist/utils/), and the bundled tsup layout (dist/).
+function findKeysDir(): string {
+  const candidates = [
+    path.join(process.cwd(), '.keys'),
+    path.join(__dirname, '../.keys'),
+    path.join(__dirname, '../../.keys'),
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, 'private.pem'))) return dir;
+  }
+  throw new Error(
+    `.keys directory with private.pem not found. Searched: ${candidates.join(', ')}`
+  );
+}
 
-const PRIVATE_KEY = fs.readFileSync(privateKeyPath, 'utf8');
-const PUBLIC_KEY = fs.readFileSync(publicKeyPath, 'utf8');
+const keysDir = findKeysDir();
+const PRIVATE_KEY = fs.readFileSync(path.join(keysDir, 'private.pem'), 'utf8');
+const PUBLIC_KEY = fs.readFileSync(path.join(keysDir, 'public.pem'), 'utf8');
 
 export interface JwtPayload {
   userId: string;

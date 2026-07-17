@@ -58,10 +58,22 @@ async function verifyPassword(password, hash2) {
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 var import_fs = __toESM(require("fs"));
 var import_path = __toESM(require("path"));
-var privateKeyPath = import_path.default.join(__dirname, "../../.keys/private.pem");
-var publicKeyPath = import_path.default.join(__dirname, "../../.keys/public.pem");
-var PRIVATE_KEY = import_fs.default.readFileSync(privateKeyPath, "utf8");
-var PUBLIC_KEY = import_fs.default.readFileSync(publicKeyPath, "utf8");
+function findKeysDir() {
+  const candidates = [
+    import_path.default.join(process.cwd(), ".keys"),
+    import_path.default.join(__dirname, "../.keys"),
+    import_path.default.join(__dirname, "../../.keys")
+  ];
+  for (const dir of candidates) {
+    if (import_fs.default.existsSync(import_path.default.join(dir, "private.pem"))) return dir;
+  }
+  throw new Error(
+    `.keys directory with private.pem not found. Searched: ${candidates.join(", ")}`
+  );
+}
+var keysDir = findKeysDir();
+var PRIVATE_KEY = import_fs.default.readFileSync(import_path.default.join(keysDir, "private.pem"), "utf8");
+var PUBLIC_KEY = import_fs.default.readFileSync(import_path.default.join(keysDir, "public.pem"), "utf8");
 function signToken(payload) {
   return import_jsonwebtoken.default.sign(payload, PRIVATE_KEY, {
     algorithm: "RS256",
