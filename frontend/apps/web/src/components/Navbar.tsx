@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, Menu, X } from 'lucide-react';
 
@@ -21,14 +21,31 @@ export function Navbar() {
   const [isLogoHovered, setIsLogoHovered] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [today, setToday] = useState('');
   // Logic: Gold if hovering OR on the homepage ('/'), otherwise White
   const isLogoGold = isLogoHovered || pathname === '/';
+
+  // Show the current date in Indian Standard Time, updating each day.
+  useEffect(() => {
+    const formatIST = () =>
+      new Date().toLocaleDateString('en-US', {
+        timeZone: 'Asia/Kolkata',
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    setToday(formatIST());
+    // Refresh at the next midnight IST so it stays current if the tab stays open.
+    const id = setInterval(() => setToday(formatIST()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <header className="bg-[#0a0a0a] border-b border-white/10">
       <div className="max-w-[1440px] mx-auto px-6 h-9 flex items-center justify-between">
         <span className="text-[10px] tracking-[0.2em] text-white/50 uppercase font-medium">
-          Monday, June 9, 2026
+          {today}
         </span>
         <button
   onClick={() => {
@@ -76,7 +93,7 @@ export function Navbar() {
           onMouseEnter={() => setIsLogoHovered(true)}
           onMouseLeave={() => setIsLogoHovered(false)}
         >
-          <span className={`text-[24px] md:text-[32px] font-serif font-bold transition-colors duration-300 ${isLogoGold ? "text-[#C9A84C]" : "text-white"}`}>
+          <span className={`text-[30px] md:text-[44px] font-serif font-bold transition-colors duration-300 ${isLogoGold ? "text-[#C9A84C]" : "text-white"}`}>
             Finbytes
           </span>
 
