@@ -13,11 +13,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen bg-background text-foreground [font-family:var(--ff-sans)]">
         <AuthProvider>
-          {/* Navbar and Footer hidden while the site is in "coming soon" mode.
-              To restore the full site, uncomment these two lines. */}
-          {/* <Navbar /> */}
+          <Navbar />
           {children}
-          {/* <Footer /> */}
+          <Footer />
         </AuthProvider>
       </body>
     </html>
