@@ -504,3 +504,90 @@ export function getRelatedArticles(
     (article) => article.product === productName && article.slug !== currentSlug
   ).slice(0, limit);
 }
+
+// ============================================
+// WEEK 4 — SEARCH & FILTER
+// ============================================
+
+export type SortOption = "relevance" | "newest";
+
+export interface SearchFilters {
+  q?: string;
+  product?: Product | "";
+  author?: string;
+  dateFrom?: string; // ISO yyyy-mm-dd
+  dateTo?: string; // ISO yyyy-mm-dd
+  sort?: SortOption;
+}
+
+// Distinct author list for the sidebar dropdown, alphabetically sorted.
+export function getAllAuthors(): string[] {
+  return Array.from(new Set(ARTICLES.map((a) => a.author))).sort((x, y) =>
+    x.localeCompare(y)
+  );
+}
+
+// Flatten the body (strings + pullquotes) into one searchable string.
+function bodyToText(body: Article["body"]): string {
+  return body
+    .map((block) => (typeof block === "string" ? block : block.text))
+    .join(" ");
+}
+
+// Weighted relevance score for a single article against a lowercased query.
+function relevanceScore(article: Article, q: string): number {
+  if (!q) return 0;
+  let score = 0;
+  const inc = (haystack: string | undefined, weight: number) => {
+    if (haystack && haystack.toLowerCase().includes(q)) score += weight;
+  };
+  inc(article.title, 5);
+  inc(article.subtitle, 3);
+  inc(article.excerpt, 3);
+  inc(article.author, 3);
+  inc(article.product, 2);
+  inc(bodyToText(article.body), 1);
+  return score;
+}
+
+// Main search: text relevance + category/author/date filters + sort.
+export function searchArticles(filters: SearchFilters): Article[] {
+  const q = (filters.q ?? "").trim().toLowerCase();
+  const from = filters.dateFrom ? new Date(filters.dateFrom) : null;
+  const to = filters.dateTo ? new Date(filters.dateTo) : null;
+  // Include the whole "to" day.
+  if (to) to.setHours(23, 59, 59, 999);
+
+  let items = ARTICLES.filter((article) => {
+    if (filters.product && article.product !== filters.product) return false;
+    if (filters.author && article.author !== filters.author) return false;
+
+    if (from || to) {
+      const d = new Date(article.date);
+      if (!isNaN(d.getTime())) {
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+      }
+    }
+
+    if (q && relevanceScore(article, q) === 0) return false;
+    return true;
+  });
+
+  const sort: SortOption = filters.sort ?? (q ? "relevance" : "newest");
+  if (sort === "relevance" && q) {
+    items = items
+      .map((a) => ({ a, s: relevanceScore(a, q) }))
+      .sort((x, y) => y.s - x.s)
+      .map((x) => x.a);
+  } else {
+    // Newest first by parsed date; fall back to id order.
+    items = [...items].sort((x, y) => {
+      const dx = new Date(x.date).getTime() || 0;
+      const dy = new Date(y.date).getTime() || 0;
+      return dy - dx;
+    });
+  }
+
+  return items;
+}

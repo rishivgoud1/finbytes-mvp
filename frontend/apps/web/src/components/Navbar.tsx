@@ -21,6 +21,7 @@ export function Navbar() {
   const [isLogoHovered, setIsLogoHovered] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
   const [today, setToday] = useState('');
   // Logic: Gold if hovering OR on the homepage ('/'), otherwise White
   const isLogoGold = isLogoHovered || pathname === '/';
@@ -164,14 +165,27 @@ export function Navbar() {
 
       {/* Search block */}
       {isSearchOpen && (
-        <div className="max-w-[1440px] mx-auto px-6 pb-6 animate-in slide-in-from-top-2 duration-200">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const term = searchValue.trim();
+            if (term) {
+              router.push(`/search?q=${encodeURIComponent(term)}`);
+              setIsSearchOpen(false);
+              setSearchValue('');
+            }
+          }}
+          className="max-w-[1440px] mx-auto px-6 pb-6 animate-in slide-in-from-top-2 duration-200"
+        >
           <input
             autoFocus
             type="text"
-            placeholder="Search Finbytes..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            placeholder="Search Finbytes and press Enter…"
             className="w-full bg-transparent border-b border-[#C9A84C] text-white p-4 focus:outline-none placeholder:text-white/30"
           />
-        </div>
+        </form>
       )}
 
     </header>
