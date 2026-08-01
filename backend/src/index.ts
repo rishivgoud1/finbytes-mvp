@@ -3,6 +3,8 @@ import helmet from 'helmet';
 import cors from 'cors';
 import authRoutes from './routes/auth';
 import articleRoutes from './routes/articles';
+import manuscriptRoutes from './routes/manuscripts';
+import uploadRoutes from './routes/uploads';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +33,8 @@ app.get('/health', (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/articles', articleRoutes);
+app.use('/manuscripts', manuscriptRoutes);
+app.use('/uploads', uploadRoutes);
 
 // ─── 404 Handler ───────────────────────────────────────────
 

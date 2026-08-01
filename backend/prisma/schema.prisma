@@ -23,6 +23,16 @@ enum ArticleStatus {
   ARCHIVED
 }
 
+// Week 5 — authoring workflow states
+enum ManuscriptStatus {
+  DRAFT
+  AWAITING_REVIEW
+  EDITOR_ASSIGNED
+  APPROVED
+  PUBLISHED
+  REJECTED
+}
+
 // ─── MODEL: Users ──────────────────────────────────────────
 
 model User {
@@ -33,8 +43,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  userRoles UserRole[]
-  articles  Article[]  @relation("ArticleAuthor")
+  userRoles   UserRole[]
+  articles    Article[]    @relation("ArticleAuthor")
+  manuscripts Manuscript[] @relation("ManuscriptAuthor")
+  assets      Asset[]      @relation("AssetOwner")
 
   @@index([email])
   @@map("users")
@@ -83,4 +95,46 @@ model Article {
   @@index([authorId])
   @@index([status])
   @@map("articles")
+}
+
+// ─── MODEL: Manuscripts (Week 5 — Authoring Suite) ────────────
+
+model Manuscript {
+  id           String           @id @default(cuid())
+  title        String
+  subtitle     String?
+  category     String
+  bodyMarkdown String           @default("") @db.Text
+  status       ManuscriptStatus @default(DRAFT)
+  authorId     String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  author User    @relation("ManuscriptAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  assets Asset[]
+
+  @@index([authorId])
+  @@index([status])
+  @@map("manuscripts")
+}
+
+// ─── MODEL: Assets (uploaded artifacts) ───────────────────────
+
+model Asset {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  filename     String
+  mimeType     String
+  sizeBytes    Int
+  publicUrl    String?
+  ownerId      String
+  manuscriptId String?
+  createdAt    DateTime @default(now())
+
+  owner      User        @relation("AssetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  manuscript Manuscript? @relation(fields: [manuscriptId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId])
+  @@index([manuscriptId])
+  @@map("assets")
 }

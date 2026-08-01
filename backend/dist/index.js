@@ -23,7 +23,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 
 // src/index.ts
-var import_express3 = __toESM(require("express"));
+var import_express5 = __toESM(require("express"));
 var import_helmet = __toESM(require("helmet"));
 var import_cors = __toESM(require("cors"));
 
@@ -341,12 +341,12 @@ router2.get("/:id", authMiddleware, async (req, res) => {
       return sendError(res, "Article not found", 404);
     }
     const isAuthor = article.authorId === req.userId;
-    const isEditor = req.roles.includes("CONTRIBUTOR_EDITOR") || req.roles.includes("ADMIN");
+    const isEditor2 = req.roles.includes("CONTRIBUTOR_EDITOR") || req.roles.includes("ADMIN");
     const isViewer = req.roles.includes("VIEWER");
     if (isViewer && article.status !== import_client3.ArticleStatus.PUBLISHED) {
       return sendError(res, "Forbidden: only published articles are visible", 403);
     }
-    if (!isAuthor && !isEditor && article.status !== import_client3.ArticleStatus.PUBLISHED) {
+    if (!isAuthor && !isEditor2 && article.status !== import_client3.ArticleStatus.PUBLISHED) {
       return sendError(res, "Forbidden: you cannot access this draft", 403);
     }
     return sendSuccess(res, article);
@@ -357,20 +357,392 @@ router2.get("/:id", authMiddleware, async (req, res) => {
 });
 var articles_default = router2;
 
+// src/routes/manuscripts.ts
+var import_express3 = require("express");
+var import_client4 = require("@prisma/client");
+var router3 = (0, import_express3.Router)();
+var AUTHOR_ROLES = ["CONTRIBUTOR_RESEARCHER", "CONTRIBUTOR_EDITOR", "ADMIN"];
+var VALID_CATEGORIES = [
+  "Finbytes of the Day",
+  "Decode",
+  "Strategy Room",
+  "Power Desk",
+  "Editorial"
+];
+function isEditor(roles = []) {
+  return roles.includes("CONTRIBUTOR_EDITOR") || roles.includes("ADMIN");
+}
+function requireAuthor(req, res) {
+  if (!req.userId || !req.roles) {
+    sendError(res, "Not authenticated", 401);
+    return false;
+  }
+  if (!req.roles.some((r) => AUTHOR_ROLES.includes(r))) {
+    sendError(
+      res,
+      "Access Denied: contributor role required to use the authoring suite",
+      403
+    );
+    return false;
+  }
+  return true;
+}
+router3.get("/", authMiddleware, async (req, res) => {
+  if (!requireAuthor(req, res)) return;
+  try {
+    const where = isEditor(req.roles) ? {} : { authorId: req.userId };
+    const manuscripts = await prisma2.manuscript.findMany({
+      where,
+      orderBy: { updatedAt: "desc" },
+      include: {
+        assets: true,
+        author: { select: { id: true, email: true, displayName: true } }
+      }
+    });
+    return sendSuccess(res, manuscripts);
+  } catch (err) {
+    console.error("list manuscripts error:", err);
+    return sendError(res, "Failed to load manuscripts", 500);
+  }
+});
+router3.get("/:id", authMiddleware, async (req, res) => {
+  if (!requireAuthor(req, res)) return;
+  try {
+    const manuscript = await prisma2.manuscript.findUnique({
+      where: { id: req.params.id },
+      include: {
+        assets: { orderBy: { createdAt: "desc" } },
+        author: { select: { id: true, email: true, displayName: true } }
+      }
+    });
+    if (!manuscript) return sendError(res, "Manuscript not found", 404);
+    if (manuscript.authorId !== req.userId && !isEditor(req.roles)) {
+      return sendError(res, "Access Denied: not your manuscript", 403);
+    }
+    return sendSuccess(res, manuscript);
+  } catch (err) {
+    console.error("get manuscript error:", err);
+    return sendError(res, "Failed to load manuscript", 500);
+  }
+});
+router3.post("/", authMiddleware, async (req, res) => {
+  if (!requireAuthor(req, res)) return;
+  const { title, subtitle, category, bodyMarkdown } = req.body ?? {};
+  if (!title || typeof title !== "string" || !title.trim()) {
+    return sendError(res, "title is required", 400);
+  }
+  if (!category || !VALID_CATEGORIES.includes(category)) {
+    return sendError(
+      res,
+      `category must be one of: ${VALID_CATEGORIES.join(", ")}`,
+      400
+    );
+  }
+  try {
+    const manuscript = await prisma2.manuscript.create({
+      data: {
+        title: title.trim(),
+        subtitle: subtitle ?? null,
+        category,
+        bodyMarkdown: bodyMarkdown ?? "",
+        authorId: req.userId,
+        status: import_client4.ManuscriptStatus.DRAFT
+      }
+    });
+    return sendSuccess(res, manuscript, 201);
+  } catch (err) {
+    console.error("create manuscript error:", err);
+    return sendError(res, "Failed to create manuscript", 500);
+  }
+});
+router3.put("/:id", authMiddleware, async (req, res) => {
+  if (!requireAuthor(req, res)) return;
+  const { title, subtitle, category, bodyMarkdown } = req.body ?? {};
+  if (category && !VALID_CATEGORIES.includes(category)) {
+    return sendError(
+      res,
+      `category must be one of: ${VALID_CATEGORIES.join(", ")}`,
+      400
+    );
+  }
+  try {
+    const existing = await prisma2.manuscript.findUnique({
+      where: { id: req.params.id }
+    });
+    if (!existing) return sendError(res, "Manuscript not found", 404);
+    if (existing.authorId !== req.userId && !isEditor(req.roles)) {
+      return sendError(res, "Access Denied: not your manuscript", 403);
+    }
+    const editableStates = [
+      import_client4.ManuscriptStatus.DRAFT,
+      import_client4.ManuscriptStatus.REJECTED
+    ];
+    if (!editableStates.includes(existing.status) && !isEditor(req.roles)) {
+      return sendError(
+        res,
+        `Cannot edit a manuscript in ${existing.status} state`,
+        409
+      );
+    }
+    const manuscript = await prisma2.manuscript.update({
+      where: { id: req.params.id },
+      data: {
+        ...title !== void 0 ? { title: String(title).trim() } : {},
+        ...subtitle !== void 0 ? { subtitle } : {},
+        ...category !== void 0 ? { category } : {},
+        ...bodyMarkdown !== void 0 ? { bodyMarkdown } : {}
+      }
+    });
+    return sendSuccess(res, manuscript);
+  } catch (err) {
+    console.error("update manuscript error:", err);
+    return sendError(res, "Failed to update manuscript", 500);
+  }
+});
+router3.post("/:id/submit", authMiddleware, async (req, res) => {
+  if (!requireAuthor(req, res)) return;
+  try {
+    const existing = await prisma2.manuscript.findUnique({
+      where: { id: req.params.id }
+    });
+    if (!existing) return sendError(res, "Manuscript not found", 404);
+    if (existing.authorId !== req.userId) {
+      return sendError(res, "Access Denied: not your manuscript", 403);
+    }
+    const submittable = [
+      import_client4.ManuscriptStatus.DRAFT,
+      import_client4.ManuscriptStatus.REJECTED
+    ];
+    if (!submittable.includes(existing.status)) {
+      return sendError(
+        res,
+        `Only DRAFT or REJECTED manuscripts can be submitted (current: ${existing.status})`,
+        409
+      );
+    }
+    if (!existing.title.trim() || !existing.bodyMarkdown.trim()) {
+      return sendError(
+        res,
+        "A title and body are required before submitting for review",
+        400
+      );
+    }
+    const manuscript = await prisma2.manuscript.update({
+      where: { id: req.params.id },
+      data: { status: import_client4.ManuscriptStatus.AWAITING_REVIEW }
+    });
+    return sendSuccess(res, manuscript);
+  } catch (err) {
+    console.error("submit manuscript error:", err);
+    return sendError(res, "Failed to submit manuscript", 500);
+  }
+});
+router3.delete("/:id", authMiddleware, async (req, res) => {
+  if (!requireAuthor(req, res)) return;
+  try {
+    const existing = await prisma2.manuscript.findUnique({
+      where: { id: req.params.id }
+    });
+    if (!existing) return sendError(res, "Manuscript not found", 404);
+    const admin = req.roles?.includes("ADMIN");
+    if (existing.authorId !== req.userId && !admin) {
+      return sendError(res, "Access Denied: not your manuscript", 403);
+    }
+    if (existing.status !== import_client4.ManuscriptStatus.DRAFT && !admin) {
+      return sendError(res, "Only DRAFT manuscripts can be deleted", 409);
+    }
+    await prisma2.manuscript.delete({ where: { id: req.params.id } });
+    return sendSuccess(res, { id: req.params.id });
+  } catch (err) {
+    console.error("delete manuscript error:", err);
+    return sendError(res, "Failed to delete manuscript", 500);
+  }
+});
+var manuscripts_default = router3;
+
+// src/routes/uploads.ts
+var import_express4 = require("express");
+var import_crypto = require("crypto");
+var import_client_s3 = require("@aws-sdk/client-s3");
+var import_s3_request_presigner = require("@aws-sdk/s3-request-presigner");
+var router4 = (0, import_express4.Router)();
+var AUTHOR_ROLES2 = ["CONTRIBUTOR_RESEARCHER", "CONTRIBUTOR_EDITOR", "ADMIN"];
+var ALLOWED_MIME = {
+  "application/pdf": "pdf",
+  "image/webp": "webp",
+  "text/csv": "csv"
+};
+var MAX_BYTES = 20 * 1024 * 1024;
+var URL_TTL_SECONDS = 300;
+var s3Client = null;
+function getS3() {
+  if (!process.env.S3_BUCKET || !process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY) {
+    return null;
+  }
+  if (!s3Client) {
+    s3Client = new import_client_s3.S3Client({
+      region: process.env.S3_REGION || "auto",
+      endpoint: process.env.S3_ENDPOINT,
+      // Cloudflare R2 endpoint; undefined for AWS S3
+      credentials: {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY
+      }
+    });
+  }
+  return s3Client;
+}
+function requireAuthor2(req, res) {
+  if (!req.userId || !req.roles) {
+    sendError(res, "Not authenticated", 401);
+    return false;
+  }
+  if (!req.roles.some((r) => AUTHOR_ROLES2.includes(r))) {
+    sendError(res, "Access Denied: contributor role required to upload", 403);
+    return false;
+  }
+  return true;
+}
+router4.post("/sign", authMiddleware, async (req, res) => {
+  if (!requireAuthor2(req, res)) return;
+  const s3 = getS3();
+  if (!s3) {
+    return sendError(res, "File storage is not configured on this server", 503);
+  }
+  const { filename, mimeType, sizeBytes, manuscriptId } = req.body ?? {};
+  if (!filename || typeof filename !== "string") {
+    return sendError(res, "filename is required", 400);
+  }
+  const extension = ALLOWED_MIME[mimeType];
+  if (!extension) {
+    return sendError(
+      res,
+      "Unsupported file type. Allowed: PDF, WebP, CSV",
+      415
+    );
+  }
+  const size = Number(sizeBytes);
+  if (!size || Number.isNaN(size) || size <= 0) {
+    return sendError(res, "sizeBytes is required", 400);
+  }
+  if (size > MAX_BYTES) {
+    return sendError(res, "File too large (maximum 20 MB)", 413);
+  }
+  try {
+    if (manuscriptId) {
+      const manuscript = await prisma2.manuscript.findUnique({
+        where: { id: manuscriptId }
+      });
+      if (!manuscript) return sendError(res, "Manuscript not found", 404);
+      if (manuscript.authorId !== req.userId && !req.roles.includes("ADMIN")) {
+        return sendError(res, "Access Denied: not your manuscript", 403);
+      }
+    }
+    const key = `uploads/${req.userId}/${(0, import_crypto.randomUUID)()}.${extension}`;
+    const publicBase = (process.env.S3_PUBLIC_BASE || "").replace(/\/$/, "");
+    const publicUrl = publicBase ? `${publicBase}/${key}` : null;
+    const uploadUrl = await (0, import_s3_request_presigner.getSignedUrl)(
+      s3,
+      new import_client_s3.PutObjectCommand({
+        Bucket: process.env.S3_BUCKET,
+        Key: key,
+        ContentType: mimeType,
+        ContentLength: size
+      }),
+      { expiresIn: URL_TTL_SECONDS }
+    );
+    const asset = await prisma2.asset.create({
+      data: {
+        key,
+        filename: String(filename).slice(0, 255),
+        mimeType,
+        sizeBytes: size,
+        publicUrl,
+        ownerId: req.userId,
+        manuscriptId: manuscriptId ?? null
+      }
+    });
+    return sendSuccess(res, {
+      assetId: asset.id,
+      key,
+      uploadUrl,
+      publicUrl,
+      expiresIn: URL_TTL_SECONDS
+    });
+  } catch (err) {
+    console.error("sign upload error:", err);
+    return sendError(res, "Failed to prepare upload", 500);
+  }
+});
+router4.get("/manuscript/:id", authMiddleware, async (req, res) => {
+  if (!requireAuthor2(req, res)) return;
+  try {
+    const manuscript = await prisma2.manuscript.findUnique({
+      where: { id: req.params.id }
+    });
+    if (!manuscript) return sendError(res, "Manuscript not found", 404);
+    const editor = req.roles.includes("CONTRIBUTOR_EDITOR") || req.roles.includes("ADMIN");
+    if (manuscript.authorId !== req.userId && !editor) {
+      return sendError(res, "Access Denied: not your manuscript", 403);
+    }
+    const assets = await prisma2.asset.findMany({
+      where: { manuscriptId: req.params.id },
+      orderBy: { createdAt: "desc" }
+    });
+    return sendSuccess(res, assets);
+  } catch (err) {
+    console.error("list assets error:", err);
+    return sendError(res, "Failed to load assets", 500);
+  }
+});
+router4.delete("/:assetId", authMiddleware, async (req, res) => {
+  if (!requireAuthor2(req, res)) return;
+  try {
+    const asset = await prisma2.asset.findUnique({
+      where: { id: req.params.assetId }
+    });
+    if (!asset) return sendError(res, "Asset not found", 404);
+    if (asset.ownerId !== req.userId && !req.roles.includes("ADMIN")) {
+      return sendError(res, "Access Denied: not your asset", 403);
+    }
+    const s3 = getS3();
+    if (s3) {
+      try {
+        await s3.send(
+          new import_client_s3.DeleteObjectCommand({
+            Bucket: process.env.S3_BUCKET,
+            Key: asset.key
+          })
+        );
+      } catch (storageErr) {
+        console.error("storage delete failed:", storageErr);
+      }
+    }
+    await prisma2.asset.delete({ where: { id: req.params.assetId } });
+    return sendSuccess(res, { id: req.params.assetId });
+  } catch (err) {
+    console.error("delete asset error:", err);
+    return sendError(res, "Failed to delete asset", 500);
+  }
+});
+var uploads_default = router4;
+
 // src/index.ts
-var app = (0, import_express3.default)();
+var app = (0, import_express5.default)();
 var PORT = process.env.PORT || 3e3;
 app.use((0, import_helmet.default)());
 app.use((0, import_cors.default)({
   origin: process.env.CORS_ORIGIN || "http://localhost:3000",
   credentials: true
 }));
-app.use(import_express3.default.json());
+app.use(import_express5.default.json());
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "healthy", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
 });
 app.use("/auth", auth_default);
 app.use("/articles", articles_default);
+app.use("/manuscripts", manuscripts_default);
+app.use("/uploads", uploads_default);
 app.use((req, res) => {
   res.status(404).json({
     success: false,
