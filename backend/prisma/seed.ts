@@ -1,7 +1,12 @@
 import { PrismaClient, RoleName, ArticleStatus } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { Pool } from 'pg'
 import * as crypto from 'crypto'
 
-const prisma = new PrismaClient()
+// Prisma 7 requires a driver adapter (same setup as src/lib/prisma.ts)
+const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+const adapter = new PrismaPg(pool)
+const prisma = new PrismaClient({ adapter })
 
 // Placeholder hash for Week 1 — Week 2 swaps this for argon2.hash()
 function mockPasswordHash(password: string): string {

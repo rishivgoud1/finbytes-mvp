@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, Menu, X } from 'lucide-react';
+import { useAuth } from '@/lib/useAuth';
+
+const AUTHOR_ROLES = ['CONTRIBUTOR_RESEARCHER', 'CONTRIBUTOR_EDITOR', 'ADMIN'];
 
 const NAV_LINKS = ["Finbytes of the Day", "Decode", "Strategy Room", "Power Desk", "Editorial", "About"] as const;
 
@@ -23,6 +26,8 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [today, setToday] = useState('');
+  const { user, logout } = useAuth();
+  const canAuthor = user?.roles?.some((r) => AUTHOR_ROLES.includes(r));
   // Logic: Gold if hovering OR on the homepage ('/'), otherwise White
   const isLogoGold = isLogoHovered || pathname === '/';
 
@@ -48,14 +53,44 @@ export function Navbar() {
         <span className="text-[10px] tracking-[0.2em] text-white/50 uppercase font-medium">
           {today}
         </span>
-        <button
-  onClick={() => {
-    document.getElementById('subscribe-section')?.scrollIntoView({ behavior: 'smooth' });
-  }}
-  className="text-[10px] tracking-[0.2em] text-[#C9A84C] uppercase font-semibold hover:opacity-80"
->
-  SUBSCRIBE &rarr;
-</button>
+        <div className="flex items-center gap-5">
+          {canAuthor && (
+            <button
+              onClick={() => router.push('/studio')}
+              className="text-[10px] tracking-[0.2em] text-white/70 uppercase font-semibold hover:text-white"
+            >
+              Studio
+            </button>
+          )}
+
+          {user ? (
+            <button
+              onClick={() => {
+                logout();
+                router.push('/');
+              }}
+              className="text-[10px] tracking-[0.2em] text-white/70 uppercase font-semibold hover:text-white"
+            >
+              Sign out
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/login')}
+              className="text-[10px] tracking-[0.2em] text-white/70 uppercase font-semibold hover:text-white"
+            >
+              Sign in
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              document.getElementById('subscribe-section')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="text-[10px] tracking-[0.2em] text-[#C9A84C] uppercase font-semibold hover:opacity-80"
+          >
+            SUBSCRIBE &rarr;
+          </button>
+        </div>
       </div>
 
       <div className="max-w-[1440px] mx-auto px-6 h-16 md:h-20 flex items-center justify-between relative">
@@ -160,6 +195,33 @@ export function Navbar() {
               </button>
             );
           })}
+
+          {canAuthor && (
+            <button
+              onClick={() => {
+                router.push('/studio');
+                setIsMenuOpen(false);
+              }}
+              className="block w-full text-left py-3 text-[12px] tracking-[0.15em] uppercase font-bold border-b border-white/5 text-white/70 hover:text-white"
+            >
+              Studio
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              if (user) {
+                logout();
+                router.push('/');
+              } else {
+                router.push('/login');
+              }
+              setIsMenuOpen(false);
+            }}
+            className="block w-full text-left py-3 text-[12px] tracking-[0.15em] uppercase font-bold text-white/70 hover:text-white"
+          >
+            {user ? 'Sign out' : 'Sign in'}
+          </button>
         </div>
       )}
 
