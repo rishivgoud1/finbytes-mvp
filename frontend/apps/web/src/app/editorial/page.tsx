@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { Clock, ChevronRight } from 'lucide-react';
-import { ARTICLES } from '@/lib/articles';
+import { useArticles } from '@/lib/useArticles';
 
 export default function EditorialPage() {
+  const { articles: ARTICLES } = useArticles();
   const pieces = ARTICLES.filter((a) => a.product === 'Editorial' && a.author === 'Shashidhar');
   const [featured, ...rest] = pieces;
 

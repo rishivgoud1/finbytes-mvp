@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ARTICLES } from '@/lib/articles';
+import { useArticles } from '@/lib/useArticles';
 
 const shorts = [
   { title: "Crisis Playbook: The 3-Step Reset", duration: "0:58", img: "https://images.unsplash.com/photo-1600896997793-b8ed3459a17f?w=400&h=700&fit=crop&auto=format" },
@@ -12,6 +12,7 @@ const shorts = [
 ];
 
 export default function StrategyRoomPage() {
+  const { articles: ARTICLES } = useArticles();
   const mainArticles = ARTICLES.filter((a) => a.product === "Strategy Room");
 
   return (

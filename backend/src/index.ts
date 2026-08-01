@@ -5,6 +5,8 @@ import authRoutes from './routes/auth';
 import articleRoutes from './routes/articles';
 import manuscriptRoutes from './routes/manuscripts';
 import uploadRoutes from './routes/uploads';
+import editorialRoutes from './routes/editorial';
+import publicRoutes from './routes/publicArticles';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +37,8 @@ app.use('/auth', authRoutes);
 app.use('/articles', articleRoutes);
 app.use('/manuscripts', manuscriptRoutes);
 app.use('/uploads', uploadRoutes);
+app.use('/editorial', editorialRoutes);
+app.use('/public', publicRoutes);
 
 // ─── 404 Handler ───────────────────────────────────────────
 

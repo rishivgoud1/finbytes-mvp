@@ -43,10 +43,12 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  userRoles   UserRole[]
-  articles    Article[]    @relation("ArticleAuthor")
-  manuscripts Manuscript[] @relation("ManuscriptAuthor")
-  assets      Asset[]      @relation("AssetOwner")
+  userRoles     UserRole[]
+  articles      Article[]    @relation("ArticleAuthor")
+  manuscripts   Manuscript[] @relation("ManuscriptAuthor")
+  editedDrafts  Manuscript[] @relation("ManuscriptEditor")
+  assets        Asset[]      @relation("AssetOwner")
+  auditActions  AuditLog[]   @relation("AuditActor")
 
   @@index([email])
   @@map("users")
@@ -101,21 +103,51 @@ model Article {
 
 model Manuscript {
   id           String           @id @default(cuid())
+  slug         String?          @unique
   title        String
   subtitle     String?
+  excerpt      String?
   category     String
+  coverImage   String?
+  readTime     String?
   bodyMarkdown String           @default("") @db.Text
   status       ManuscriptStatus @default(DRAFT)
   authorId     String
+  editorId     String?
+  reviewNote   String?          @db.Text
+  publishedAt  DateTime?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
-  author User    @relation("ManuscriptAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  assets Asset[]
+  author    User       @relation("ManuscriptAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  editor    User?      @relation("ManuscriptEditor", fields: [editorId], references: [id], onDelete: SetNull)
+  assets    Asset[]
+  auditLogs AuditLog[]
 
   @@index([authorId])
   @@index([status])
+  @@index([publishedAt])
   @@map("manuscripts")
+}
+
+// ─── MODEL: Audit Log (immutable workflow history) ────────────
+
+model AuditLog {
+  id           String            @id @default(cuid())
+  manuscriptId String
+  actorId      String?
+  action       String
+  fromStatus   ManuscriptStatus?
+  toStatus     ManuscriptStatus?
+  note         String?           @db.Text
+  createdAt    DateTime          @default(now())
+
+  manuscript Manuscript @relation(fields: [manuscriptId], references: [id], onDelete: Cascade)
+  actor      User?      @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([manuscriptId])
+  @@index([actorId])
+  @@map("audit_logs")
 }
 
 // ─── MODEL: Assets (uploaded artifacts) ───────────────────────

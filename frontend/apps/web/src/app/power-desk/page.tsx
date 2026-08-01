@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { Clock } from 'lucide-react';
-import { ARTICLES } from '@/lib/articles';
+import { useArticles } from '@/lib/useArticles';
 
 export default function PowerDeskPage() {
+  const { articles: ARTICLES } = useArticles();
   const ceoArticles = ARTICLES.filter((a) => a.product === 'Power Desk' && a.authorTitle === 'Chief Executive Officer');
 
   return (

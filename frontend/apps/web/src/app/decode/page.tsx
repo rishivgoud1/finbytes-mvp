@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { Clock } from 'lucide-react';
-import { ARTICLES } from '@/lib/articles';
+import { useArticles } from '@/lib/useArticles';
 import { ProductBadge } from '@/components/ProductBadge'; // Ensure this path is correct
 
 export default function DecodePage() {
+  const { articles: ARTICLES } = useArticles();
   const articles = ARTICLES.filter((a) => a.product === 'Decode');
 
   return (

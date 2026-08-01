@@ -23,7 +23,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 
 // src/index.ts
-var import_express5 = __toESM(require("express"));
+var import_express7 = __toESM(require("express"));
 var import_helmet = __toESM(require("helmet"));
 var import_cors = __toESM(require("cors"));
 
@@ -427,7 +427,7 @@ router3.get("/:id", authMiddleware, async (req, res) => {
 });
 router3.post("/", authMiddleware, async (req, res) => {
   if (!requireAuthor(req, res)) return;
-  const { title, subtitle, category, bodyMarkdown } = req.body ?? {};
+  const { title, subtitle, excerpt, category, coverImage, readTime, bodyMarkdown } = req.body ?? {};
   if (!title || typeof title !== "string" || !title.trim()) {
     return sendError(res, "title is required", 400);
   }
@@ -443,7 +443,10 @@ router3.post("/", authMiddleware, async (req, res) => {
       data: {
         title: title.trim(),
         subtitle: subtitle ?? null,
+        excerpt: excerpt ?? null,
         category,
+        coverImage: coverImage ?? null,
+        readTime: readTime ?? null,
         bodyMarkdown: bodyMarkdown ?? "",
         authorId: req.userId,
         status: import_client4.ManuscriptStatus.DRAFT
@@ -457,7 +460,7 @@ router3.post("/", authMiddleware, async (req, res) => {
 });
 router3.put("/:id", authMiddleware, async (req, res) => {
   if (!requireAuthor(req, res)) return;
-  const { title, subtitle, category, bodyMarkdown } = req.body ?? {};
+  const { title, subtitle, excerpt, category, coverImage, readTime, bodyMarkdown } = req.body ?? {};
   if (category && !VALID_CATEGORIES.includes(category)) {
     return sendError(
       res,
@@ -489,7 +492,10 @@ router3.put("/:id", authMiddleware, async (req, res) => {
       data: {
         ...title !== void 0 ? { title: String(title).trim() } : {},
         ...subtitle !== void 0 ? { subtitle } : {},
+        ...excerpt !== void 0 ? { excerpt } : {},
         ...category !== void 0 ? { category } : {},
+        ...coverImage !== void 0 ? { coverImage } : {},
+        ...readTime !== void 0 ? { readTime } : {},
         ...bodyMarkdown !== void 0 ? { bodyMarkdown } : {}
       }
     });
@@ -727,15 +733,284 @@ router4.delete("/:assetId", authMiddleware, async (req, res) => {
 });
 var uploads_default = router4;
 
+// src/routes/editorial.ts
+var import_express5 = require("express");
+var import_client5 = require("@prisma/client");
+var router5 = (0, import_express5.Router)();
+var EDITOR_ROLES = ["CONTRIBUTOR_EDITOR", "ADMIN"];
+function requireEditor(req, res) {
+  if (!req.userId || !req.roles) {
+    sendError(res, "Not authenticated", 401);
+    return false;
+  }
+  if (!req.roles.some((r) => EDITOR_ROLES.includes(r))) {
+    sendError(res, "Access Denied: editorial role required", 403);
+    return false;
+  }
+  return true;
+}
+async function recordAudit(params) {
+  await prisma2.auditLog.create({
+    data: {
+      manuscriptId: params.manuscriptId,
+      actorId: params.actorId,
+      action: params.action,
+      fromStatus: params.fromStatus ?? null,
+      toStatus: params.toStatus ?? null,
+      note: params.note ?? null
+    }
+  });
+}
+async function generateSlug(title, manuscriptId) {
+  const base = title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 80) || "article";
+  let candidate = base;
+  let suffix = 1;
+  while (true) {
+    const clash = await prisma2.manuscript.findUnique({
+      where: { slug: candidate }
+    });
+    if (!clash || clash.id === manuscriptId) return candidate;
+    suffix += 1;
+    candidate = `${base}-${suffix}`;
+  }
+}
+router5.get("/queue", authMiddleware, async (req, res) => {
+  if (!requireEditor(req, res)) return;
+  const statusParam = req.query.status;
+  const defaultStates = [
+    import_client5.ManuscriptStatus.AWAITING_REVIEW,
+    import_client5.ManuscriptStatus.EDITOR_ASSIGNED,
+    import_client5.ManuscriptStatus.APPROVED
+  ];
+  const where = statusParam && statusParam in import_client5.ManuscriptStatus ? { status: statusParam } : { status: { in: defaultStates } };
+  try {
+    const items = await prisma2.manuscript.findMany({
+      where,
+      orderBy: { updatedAt: "asc" },
+      include: {
+        author: { select: { id: true, email: true, displayName: true } },
+        editor: { select: { id: true, email: true, displayName: true } },
+        assets: true
+      }
+    });
+    return sendSuccess(res, items);
+  } catch (err) {
+    console.error("editorial queue error:", err);
+    return sendError(res, "Failed to load review queue", 500);
+  }
+});
+router5.get("/:id/audit", authMiddleware, async (req, res) => {
+  if (!requireEditor(req, res)) return;
+  try {
+    const logs = await prisma2.auditLog.findMany({
+      where: { manuscriptId: req.params.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        actor: { select: { id: true, email: true, displayName: true } }
+      }
+    });
+    return sendSuccess(res, logs);
+  } catch (err) {
+    console.error("audit fetch error:", err);
+    return sendError(res, "Failed to load audit trail", 500);
+  }
+});
+async function transition(req, res, opts) {
+  if (!requireEditor(req, res)) return;
+  const note = (req.body?.note ?? "").toString().trim();
+  if (opts.requireNote && !note) {
+    return sendError(res, "A note explaining the decision is required", 400);
+  }
+  try {
+    const manuscript = await prisma2.manuscript.findUnique({
+      where: { id: req.params.id }
+    });
+    if (!manuscript) return sendError(res, "Manuscript not found", 404);
+    if (!opts.allowedFrom.includes(manuscript.status)) {
+      return sendError(
+        res,
+        `Cannot ${opts.action} a manuscript in ${manuscript.status} state`,
+        409
+      );
+    }
+    const extra = opts.extraData ? await opts.extraData(manuscript) : {};
+    const updated = await prisma2.manuscript.update({
+      where: { id: manuscript.id },
+      data: {
+        status: opts.toStatus,
+        ...note ? { reviewNote: note } : {},
+        ...extra
+      }
+    });
+    await recordAudit({
+      manuscriptId: manuscript.id,
+      actorId: req.userId,
+      action: opts.action,
+      fromStatus: manuscript.status,
+      toStatus: opts.toStatus,
+      note: note || null
+    });
+    return sendSuccess(res, updated);
+  } catch (err) {
+    console.error(`${opts.action} error:`, err);
+    return sendError(res, `Failed to ${opts.action} manuscript`, 500);
+  }
+}
+router5.post(
+  "/:id/assign",
+  authMiddleware,
+  (req, res) => transition(req, res, {
+    action: "assign",
+    allowedFrom: [import_client5.ManuscriptStatus.AWAITING_REVIEW],
+    toStatus: import_client5.ManuscriptStatus.EDITOR_ASSIGNED,
+    extraData: () => ({ editorId: req.userId })
+  })
+);
+router5.post(
+  "/:id/approve",
+  authMiddleware,
+  (req, res) => transition(req, res, {
+    action: "approve",
+    allowedFrom: [
+      import_client5.ManuscriptStatus.AWAITING_REVIEW,
+      import_client5.ManuscriptStatus.EDITOR_ASSIGNED
+    ],
+    toStatus: import_client5.ManuscriptStatus.APPROVED,
+    extraData: () => ({ editorId: req.userId })
+  })
+);
+router5.post(
+  "/:id/reject",
+  authMiddleware,
+  (req, res) => transition(req, res, {
+    action: "reject",
+    allowedFrom: [
+      import_client5.ManuscriptStatus.AWAITING_REVIEW,
+      import_client5.ManuscriptStatus.EDITOR_ASSIGNED,
+      import_client5.ManuscriptStatus.APPROVED
+    ],
+    toStatus: import_client5.ManuscriptStatus.REJECTED,
+    requireNote: true,
+    extraData: () => ({ editorId: req.userId })
+  })
+);
+router5.post(
+  "/:id/publish",
+  authMiddleware,
+  (req, res) => transition(req, res, {
+    action: "publish",
+    allowedFrom: [
+      import_client5.ManuscriptStatus.APPROVED,
+      import_client5.ManuscriptStatus.EDITOR_ASSIGNED
+    ],
+    toStatus: import_client5.ManuscriptStatus.PUBLISHED,
+    extraData: async (m) => ({
+      editorId: req.userId,
+      publishedAt: m.publishedAt ?? /* @__PURE__ */ new Date(),
+      slug: m.slug ?? await generateSlug(m.title, m.id)
+    })
+  })
+);
+router5.post(
+  "/:id/unpublish",
+  authMiddleware,
+  (req, res) => transition(req, res, {
+    action: "unpublish",
+    allowedFrom: [import_client5.ManuscriptStatus.PUBLISHED],
+    toStatus: import_client5.ManuscriptStatus.APPROVED
+  })
+);
+var editorial_default = router5;
+
+// src/routes/publicArticles.ts
+var import_express6 = require("express");
+var import_client6 = require("@prisma/client");
+var router6 = (0, import_express6.Router)();
+var PUBLIC_SELECT = {
+  id: true,
+  slug: true,
+  title: true,
+  subtitle: true,
+  excerpt: true,
+  category: true,
+  coverImage: true,
+  readTime: true,
+  bodyMarkdown: true,
+  publishedAt: true,
+  author: { select: { displayName: true, email: true } },
+  assets: {
+    select: { id: true, filename: true, mimeType: true, publicUrl: true }
+  }
+};
+function toArticle(m) {
+  return {
+    id: m.id,
+    slug: m.slug,
+    product: m.category,
+    title: m.title,
+    subtitle: m.subtitle ?? void 0,
+    excerpt: m.excerpt ?? "",
+    author: m.author?.displayName || m.author?.email || "Finbytes",
+    authorTitle: "Contributor",
+    date: m.publishedAt ? new Date(m.publishedAt).toLocaleDateString("en-US", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    }) : "",
+    publishedAt: m.publishedAt,
+    readTime: m.readTime ?? "5 min read",
+    image: m.coverImage ?? "",
+    bodyMarkdown: m.bodyMarkdown,
+    assets: m.assets ?? []
+  };
+}
+router6.get("/articles", async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+  const category = req.query.category;
+  try {
+    const items = await prisma2.manuscript.findMany({
+      where: {
+        status: import_client6.ManuscriptStatus.PUBLISHED,
+        ...category ? { category } : {}
+      },
+      orderBy: { publishedAt: "desc" },
+      take: limit,
+      select: PUBLIC_SELECT
+    });
+    return sendSuccess(res, items.map(toArticle));
+  } catch (err) {
+    console.error("public articles error:", err);
+    return sendError(res, "Failed to load articles", 500);
+  }
+});
+router6.get("/articles/:slug", async (req, res) => {
+  try {
+    const item = await prisma2.manuscript.findFirst({
+      where: {
+        slug: req.params.slug,
+        status: import_client6.ManuscriptStatus.PUBLISHED
+      },
+      select: PUBLIC_SELECT
+    });
+    if (!item) return sendError(res, "Article not found", 404);
+    return sendSuccess(res, toArticle(item));
+  } catch (err) {
+    console.error("public article error:", err);
+    return sendError(res, "Failed to load article", 500);
+  }
+});
+var publicArticles_default = router6;
+
 // src/index.ts
-var app = (0, import_express5.default)();
+var app = (0, import_express7.default)();
 var PORT = process.env.PORT || 3e3;
 app.use((0, import_helmet.default)());
 app.use((0, import_cors.default)({
   origin: process.env.CORS_ORIGIN || "http://localhost:3000",
   credentials: true
 }));
-app.use(import_express5.default.json());
+app.use(import_express7.default.json());
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "healthy", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
 });
@@ -743,6 +1018,8 @@ app.use("/auth", auth_default);
 app.use("/articles", articles_default);
 app.use("/manuscripts", manuscripts_default);
 app.use("/uploads", uploads_default);
+app.use("/editorial", editorial_default);
+app.use("/public", publicArticles_default);
 app.use((req, res) => {
   res.status(404).json({
     success: false,

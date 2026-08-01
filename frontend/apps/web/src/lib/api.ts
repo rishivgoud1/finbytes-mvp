@@ -94,23 +94,108 @@ export interface AssetRecord {
 
 export interface Manuscript {
   id: string;
+  slug?: string | null;
   title: string;
   subtitle: string | null;
+  excerpt?: string | null;
   category: string;
+  coverImage?: string | null;
+  readTime?: string | null;
   bodyMarkdown: string;
   status: ManuscriptStatus;
   authorId: string;
+  editorId?: string | null;
+  reviewNote?: string | null;
+  publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   assets?: AssetRecord[];
+  author?: { id: string; email: string; displayName?: string };
+  editor?: { id: string; email: string; displayName?: string } | null;
 }
 
 export interface ManuscriptInput {
   title: string;
   subtitle?: string;
+  excerpt?: string;
   category: string;
+  coverImage?: string;
+  readTime?: string;
   bodyMarkdown?: string;
 }
+
+export interface AuditEntry {
+  id: string;
+  action: string;
+  fromStatus: ManuscriptStatus | null;
+  toStatus: ManuscriptStatus | null;
+  note: string | null;
+  createdAt: string;
+  actor?: { id: string; email: string; displayName?: string } | null;
+}
+
+// ============================================
+// WEEK 6 — EDITORIAL WORKFLOW
+// ============================================
+
+export const editorialAPI = {
+  queue: (status?: string) =>
+    apiCall<Manuscript[]>(`/editorial/queue${status ? `?status=${status}` : ''}`),
+
+  audit: (id: string) => apiCall<AuditEntry[]>(`/editorial/${id}/audit`),
+
+  assign: (id: string) =>
+    apiCall<Manuscript>(`/editorial/${id}/assign`, { method: 'POST' }),
+
+  approve: (id: string, note?: string) =>
+    apiCall<Manuscript>(`/editorial/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ note: note ?? '' }),
+    }),
+
+  reject: (id: string, note: string) =>
+    apiCall<Manuscript>(`/editorial/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    }),
+
+  publish: (id: string) =>
+    apiCall<Manuscript>(`/editorial/${id}/publish`, { method: 'POST' }),
+
+  unpublish: (id: string) =>
+    apiCall<Manuscript>(`/editorial/${id}/unpublish`, { method: 'POST' }),
+};
+
+// ============================================
+// PUBLIC ARTICLES (no auth) — powers the website
+// ============================================
+
+export interface PublicArticle {
+  id: string;
+  slug: string;
+  product: string;
+  title: string;
+  subtitle?: string;
+  excerpt: string;
+  author: string;
+  authorTitle: string;
+  date: string;
+  publishedAt: string | null;
+  readTime: string;
+  image: string;
+  bodyMarkdown: string;
+  assets: AssetRecord[];
+}
+
+export const publicAPI = {
+  articles: (category?: string) =>
+    apiCall<PublicArticle[]>(
+      `/public/articles${category ? `?category=${encodeURIComponent(category)}` : ''}`
+    ),
+
+  article: (slug: string) =>
+    apiCall<PublicArticle>(`/public/articles/${slug}`),
+};
 
 export const manuscriptsAPI = {
   list: () => apiCall<Manuscript[]>('/manuscripts'),

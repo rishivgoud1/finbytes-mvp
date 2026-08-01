@@ -5,10 +5,12 @@ import { LatestFromFinbytes } from '@/components/LatestFromFinbytes';
 import { FeaturedAnalysis } from '@/components/FeaturedAnalysis';
 import { LatestVideos } from '@/components/LatestVideos';
 import { NewsletterSection } from '@/components/NewsletterSection';
-import { ARTICLES } from '@/lib/articles';
+import { useArticles } from '@/lib/useArticles';
 
 export default function HomePage() {
-  // Logic from your provided code to filter data locally
+  // Published database articles merged ahead of the built-in content.
+  const { articles: ARTICLES } = useArticles();
+
   const latestArticles = ARTICLES.filter((a) => a.product !== 'Finbytes of the Day').slice(0, 6);
   const featuredArticle = ARTICLES.find((a) => a.product === 'Decode' || a.product === 'Editorial') ?? ARTICLES[1];
 

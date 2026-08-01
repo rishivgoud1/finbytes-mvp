@@ -101,7 +101,8 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res) => {
 router.post('/', authMiddleware, async (req: AuthRequest, res) => {
   if (!requireAuthor(req, res)) return;
 
-  const { title, subtitle, category, bodyMarkdown } = req.body ?? {};
+  const { title, subtitle, excerpt, category, coverImage, readTime, bodyMarkdown } =
+    req.body ?? {};
 
   if (!title || typeof title !== 'string' || !title.trim()) {
     return sendError(res, 'title is required', 400);
@@ -119,7 +120,10 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       data: {
         title: title.trim(),
         subtitle: subtitle ?? null,
+        excerpt: excerpt ?? null,
         category,
+        coverImage: coverImage ?? null,
+        readTime: readTime ?? null,
         bodyMarkdown: bodyMarkdown ?? '',
         authorId: req.userId!,
         status: ManuscriptStatus.DRAFT,
@@ -141,7 +145,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
 router.put('/:id', authMiddleware, async (req: AuthRequest, res) => {
   if (!requireAuthor(req, res)) return;
 
-  const { title, subtitle, category, bodyMarkdown } = req.body ?? {};
+  const { title, subtitle, excerpt, category, coverImage, readTime, bodyMarkdown } =
+    req.body ?? {};
 
   if (category && !VALID_CATEGORIES.includes(category)) {
     return sendError(
@@ -178,7 +183,10 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res) => {
       data: {
         ...(title !== undefined ? { title: String(title).trim() } : {}),
         ...(subtitle !== undefined ? { subtitle } : {}),
+        ...(excerpt !== undefined ? { excerpt } : {}),
         ...(category !== undefined ? { category } : {}),
+        ...(coverImage !== undefined ? { coverImage } : {}),
+        ...(readTime !== undefined ? { readTime } : {}),
         ...(bodyMarkdown !== undefined ? { bodyMarkdown } : {}),
       },
     });

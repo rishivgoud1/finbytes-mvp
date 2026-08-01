@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FileText, Plus } from 'lucide-react';
+import { ClipboardList, FileText, Plus } from 'lucide-react';
 import { manuscriptsAPI, type Manuscript, type ManuscriptStatus } from '@/lib/api';
+import { useAuth } from '@/lib/useAuth';
+
+const EDITOR_ROLES = ['CONTRIBUTOR_EDITOR', 'ADMIN'];
 
 const STATUS_STYLE: Record<ManuscriptStatus, string> = {
   DRAFT: 'text-muted-foreground',
@@ -18,6 +21,8 @@ export default function StudioDashboard() {
   const [items, setItems] = useState<Manuscript[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { user } = useAuth();
+  const isEditor = user?.roles?.some((r) => EDITOR_ROLES.includes(r));
 
   useEffect(() => {
     manuscriptsAPI.list().then((res) => {
@@ -37,12 +42,22 @@ export default function StudioDashboard() {
         <h1 className="text-[30px] sm:text-[38px] font-bold [font-family:var(--ff-display)] leading-tight">
           My Manuscripts
         </h1>
-        <Link
-          href="/studio/new"
-          className="inline-flex items-center gap-2 bg-[#C9A84C] text-black px-4 py-2 text-[11px] tracking-[0.15em] uppercase font-bold"
-        >
-          <Plus size={14} /> New manuscript
-        </Link>
+        <div className="flex items-center gap-3">
+          {isEditor && (
+            <Link
+              href="/studio/review"
+              className="inline-flex items-center gap-2 border border-border px-4 py-2 text-[11px] tracking-[0.15em] uppercase font-bold hover:border-[#C9A84C]"
+            >
+              <ClipboardList size={14} /> Review queue
+            </Link>
+          )}
+          <Link
+            href="/studio/new"
+            className="inline-flex items-center gap-2 bg-[#C9A84C] text-black px-4 py-2 text-[11px] tracking-[0.15em] uppercase font-bold"
+          >
+            <Plus size={14} /> New manuscript
+          </Link>
+        </div>
       </div>
 
       {loading ? (

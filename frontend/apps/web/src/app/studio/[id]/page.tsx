@@ -29,6 +29,9 @@ export default function StudioEditorPage() {
 
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
+  const [excerpt, setExcerpt] = useState('');
+  const [coverImage, setCoverImage] = useState('');
+  const [readTime, setReadTime] = useState('');
   const [category, setCategory] = useState('Decode');
   const [body, setBody] = useState('');
   const [status, setStatus] = useState<ManuscriptStatus>('DRAFT');
@@ -48,6 +51,9 @@ export default function StudioEditorPage() {
         const m = res.data;
         setTitle(m.title);
         setSubtitle(m.subtitle ?? '');
+        setExcerpt(m.excerpt ?? '');
+        setCoverImage(m.coverImage ?? '');
+        setReadTime(m.readTime ?? '');
         setCategory(m.category);
         setBody(m.bodyMarkdown ?? '');
         setStatus(m.status);
@@ -67,7 +73,15 @@ export default function StudioEditorPage() {
     setSaving(true);
     setMessage('');
 
-    const payload = { title, subtitle, category, bodyMarkdown: body };
+    const payload = {
+      title,
+      subtitle,
+      excerpt,
+      coverImage,
+      readTime,
+      category,
+      bodyMarkdown: body,
+    };
     const res = isNew
       ? await manuscriptsAPI.create(payload)
       : await manuscriptsAPI.update(id, payload);
@@ -80,7 +94,7 @@ export default function StudioEditorPage() {
     } else {
       setMessage(res.error || 'Save failed');
     }
-  }, [isNew, id, title, subtitle, category, body, router]);
+  }, [isNew, id, title, subtitle, excerpt, coverImage, readTime, category, body, router]);
 
   const submit = async () => {
     if (isNew) {
@@ -188,6 +202,32 @@ export default function StudioEditorPage() {
         placeholder="Subtitle or deck (optional)"
         className="w-full text-[17px] italic text-muted-foreground [font-family:var(--ff-reading)] border-b border-border pb-2 mb-6 bg-transparent focus:outline-none focus:border-[#C9A84C] disabled:opacity-60"
       />
+
+      <textarea
+        value={excerpt}
+        onChange={(e) => setExcerpt(e.target.value)}
+        disabled={!editable}
+        rows={2}
+        placeholder="Excerpt — the summary shown on article cards"
+        className="w-full text-[14px] text-muted-foreground [font-family:var(--ff-sans)] border border-border p-3 mb-4 bg-transparent focus:outline-none focus:border-[#C9A84C] disabled:opacity-60"
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <input
+          value={coverImage}
+          onChange={(e) => setCoverImage(e.target.value)}
+          disabled={!editable}
+          placeholder="Cover image URL"
+          className="border border-border p-2 text-sm bg-transparent focus:outline-none focus:border-[#C9A84C] disabled:opacity-60"
+        />
+        <input
+          value={readTime}
+          onChange={(e) => setReadTime(e.target.value)}
+          disabled={!editable}
+          placeholder="Read time (e.g. 8 min read)"
+          className="border border-border p-2 text-sm bg-transparent focus:outline-none focus:border-[#C9A84C] disabled:opacity-60"
+        />
+      </div>
 
       <div className="flex items-center gap-4 flex-wrap mb-6">
         <select

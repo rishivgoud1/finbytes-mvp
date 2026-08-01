@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { ChevronRight, Clock } from 'lucide-react';
-import { ARTICLES } from '@/lib/articles';
+import { useArticles } from '@/lib/useArticles';
 
 export default function FinbytesOfTheDayPage() {
+  const { articles: ARTICLES } = useArticles();
   const edition = ARTICLES.find((a) => a.product === 'Finbytes of the Day') ?? ARTICLES[0];
 
   return (
