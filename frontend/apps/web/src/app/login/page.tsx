@@ -16,8 +16,9 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
-      router.push('/');
+      const ok = await login(email, password);
+      // Only leave the page when authentication actually succeeded.
+      if (ok) router.push('/');
     } finally {
       setLoading(false);
     }

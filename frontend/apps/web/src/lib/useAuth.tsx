@@ -13,7 +13,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   error: string | null;
 }
@@ -45,15 +45,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  // Returns true only when authentication actually succeeded, so callers
+  // can avoid redirecting on a failed attempt.
+  const login = async (email: string, password: string): Promise<boolean> => {
     setError(null);
     const response = await authAPI.login(email, password);
-    if (!response.success) {
+    if (!response.success || !response.data) {
       setError(response.error || 'Login failed');
-      return;
+      return false;
     }
-    setAuthToken(response.data!.token);
-    setUser(response.data!.user);
+    setAuthToken(response.data.token);
+    setUser(response.data.user);
+    return true;
   };
 
   const logout = () => {
