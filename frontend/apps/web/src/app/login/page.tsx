@@ -8,8 +8,8 @@ import { useAuth } from '@/lib/useAuth';
 export default function LoginPage() {
   const router = useRouter();
   const { login, error: authError } = useAuth();
-  const [email, setEmail] = useState('viewer@finbytes.dev');
-  const [password, setPassword] = useState('DevViewer2024!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
