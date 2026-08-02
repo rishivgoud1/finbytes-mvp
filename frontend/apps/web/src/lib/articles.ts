@@ -444,6 +444,54 @@ export const ARTICLES: Article[] = [
       },
     ],
   },
+  {
+    id: 19,
+    slug: "jensen-huang-ceo-powering-ai-revolution",
+    product: "Power Desk",
+    title: "Jensen Huang — The CEO Powering the AI Revolution",
+    subtitle:
+      "How two decades of platform thinking turned a graphics card company into the backbone of global artificial intelligence",
+    excerpt:
+      "Few leaders have influenced the future of technology like NVIDIA CEO Jensen Huang. Once known primarily for gaming graphics cards, NVIDIA has transformed into the backbone of the global AI revolution.",
+    author: "Finbytes Power Desk",
+    authorTitle: "Market Intelligence",
+    date: "August 2, 2026",
+    readTime: "3 min read",
+    image: "/images/nvidia-jensen-huang.jpeg",
+    body: [
+      "Few leaders have influenced the future of technology like NVIDIA CEO Jensen Huang. Once known primarily for gaming graphics cards, NVIDIA has transformed into the backbone of the global AI revolution. Its GPUs now power everything from ChatGPT and autonomous vehicles to scientific research and national AI infrastructure.",
+      "Huang's strategy has been consistent for over two decades: invest early, think long term, and build platforms rather than products. While competitors focused on short-term gains, NVIDIA quietly built the hardware and software ecosystem that now powers artificial intelligence worldwide.",
+      "Today, governments, startups, and Fortune 500 companies depend on NVIDIA's computing power. Huang has proven that technological leadership comes not from following trends but from creating them.",
+      {
+        type: "pullquote" as const,
+        text: "Power Insight: Great leaders don't chase the future — they build the infrastructure that makes the future possible.",
+      },
+    ],
+  },
+  {
+    id: 20,
+    slug: "india-semiconductor-mission-strategic-power",
+    product: "Power Desk",
+    title: "India's Semiconductor Mission — Building Strategic Power Beyond Software",
+    subtitle:
+      "After decades of software leadership, India is pursuing the foundation layer of modern technology",
+    excerpt:
+      "For decades, India became a global leader in software. Today, it is aiming to become a significant player in semiconductors — the foundation of modern technology.",
+    author: "Finbytes Power Desk",
+    authorTitle: "Market Intelligence",
+    date: "August 2, 2026",
+    readTime: "3 min read",
+    image: "/images/india-semiconductor-mission.jpeg",
+    body: [
+      "For decades, India became a global leader in software. Today, it is aiming to become a significant player in semiconductors — the foundation of modern technology. Chips power smartphones, electric vehicles, defense systems, AI data centers, and industrial automation, making them a strategic asset for every nation.",
+      "Through policy support, global partnerships, and manufacturing investments, India is strengthening its semiconductor ecosystem. The goal is not only to reduce import dependence but also to become a trusted global manufacturing hub.",
+      "Success will require skilled talent, resilient supply chains, advanced research, and sustained investment. If executed effectively, the semiconductor mission could redefine India's position in the global technology landscape.",
+      {
+        type: "pullquote" as const,
+        text: "Power Insight: In the digital age, nations that build chips don't just manufacture technology — they shape economic growth, national security, and global influence.",
+      },
+    ],
+  },
 ];
 export const byId = (id: string) => {
   return ARTICLES.find((article) => article.id === Number(id));

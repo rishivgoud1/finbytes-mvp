@@ -6,7 +6,7 @@ import { useArticles } from '@/lib/useArticles';
 
 export default function PowerDeskPage() {
   const { articles: ARTICLES } = useArticles();
-  const ceoArticles = ARTICLES.filter((a) => a.product === 'Power Desk' && a.authorTitle === 'Chief Executive Officer');
+  const ceoArticles = ARTICLES.filter((a) => a.product === 'Power Desk');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
