@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Play } from 'lucide-react'; // Essential import
 import { type Article, LATEST_VIDEOS } from '@/lib/articles';
 import { ProductBadge } from './ProductBadge';
@@ -78,28 +79,86 @@ export function HeroSection({ articles }: HeroSectionProps) {
       </div>
 
       {/* Right Sidebar - Latest Video */}
-      <div className="bg-secondary p-6 flex flex-col justify-between border border-border">
-        <div>
-          <h3 className="text-xs uppercase tracking-wider font-bold mb-4 pb-2 border-b border-border text-foreground">Latest Video Sidebar</h3>
-          <div className="relative w-full aspect-video bg-neutral-800 mb-3 group cursor-pointer" onClick={() => router.push(`/article/${slideArticles[0].id}`)}>
-            <img src={LATEST_VIDEOS[0].thumbnail} alt={LATEST_VIDEOS[0].title} className="w-full h-full object-cover opacity-80" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-[#0a0a0a]/80 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Play size={20} className="text-white fill-white ml-1" />
-              </div>
-            </div>
-            <span className="absolute bottom-2 right-2 bg-black text-white text-[10px] px-1">{LATEST_VIDEOS[0].duration}</span>
-          </div>
-          <h4 className="text-sm font-bold tracking-tight mb-1 [font-family:var(--ff-display)]">{LATEST_VIDEOS[0].title}</h4>
-          <span className="text-xs text-muted-foreground">{LATEST_VIDEOS[0].category} Analysis</span>
+      <div className="bg-secondary p-6 flex flex-col border border-border">
+        {/* Section label */}
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-border">
+          <h3 className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#C9A84C]">
+            Finbytes TV
+          </h3>
+          <Link
+            href="/videos"
+            className="text-[10px] uppercase tracking-[0.15em] font-bold text-muted-foreground hover:text-[#C9A84C] transition-colors"
+          >
+            View all
+          </Link>
         </div>
 
-        {/* Dynamic Slide Author Footer */}
-        <div className="pt-4 border-t border-border mt-4 flex items-center gap-3">
-          <img src={current.authorAvatar} alt={current.author} className="w-8 h-8 rounded-full object-cover" />
-          <div>
-            <p className="text-xs font-bold text-foreground">{current.author}</p>
-            <p className="text-[11px] text-muted-foreground">{current.authorTitle}</p>
+        {/* Featured video */}
+        <div
+          className="relative w-full aspect-video bg-neutral-800 mb-3 group cursor-pointer overflow-hidden"
+          onClick={() => router.push(`/article/${slideArticles[0].slug}`)}
+        >
+          <img
+            src={LATEST_VIDEOS[0].thumbnail}
+            alt={LATEST_VIDEOS[0].title}
+            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-[103%] transition-all duration-500"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-[#0a0a0a]/80 flex items-center justify-center group-hover:scale-110 group-hover:bg-[#C9A84C] transition-all">
+              <Play size={20} className="text-white fill-white ml-1" />
+            </div>
+          </div>
+          <span className="absolute bottom-2 right-2 bg-black/85 text-white text-[10px] px-1.5 py-0.5 tabular-nums">
+            {LATEST_VIDEOS[0].duration}
+          </span>
+        </div>
+
+        <h4 className="text-sm font-bold leading-snug mb-1 [font-family:var(--ff-display)] hover:text-[#C9A84C] transition-colors cursor-pointer">
+          {LATEST_VIDEOS[0].title}
+        </h4>
+        <p className="text-[11px] text-muted-foreground mb-5">
+          Analysis &middot; {LATEST_VIDEOS[0].date}
+        </p>
+
+        {/* More episodes */}
+        {LATEST_VIDEOS.length > 1 && (
+          <div className="border-t border-border pt-4 space-y-3">
+            <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-muted-foreground">
+              More episodes
+            </p>
+            {LATEST_VIDEOS.slice(1, 3).map((video) => (
+              <div key={video.id} className="flex gap-3 group cursor-pointer">
+                <div className="relative w-20 shrink-0 aspect-video bg-neutral-800 overflow-hidden">
+                  <img
+                    src={video.thumbnail}
+                    alt={video.title}
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                  />
+                  <span className="absolute bottom-0.5 right-0.5 bg-black/85 text-white text-[9px] px-1 tabular-nums">
+                    {video.duration}
+                  </span>
+                </div>
+                <p className="text-[12px] leading-snug font-medium [font-family:var(--ff-display)] line-clamp-3 group-hover:text-[#C9A84C] transition-colors">
+                  {video.title}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Current slide byline */}
+        <div className="pt-4 border-t border-border mt-auto flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#C9A84C] text-black flex items-center justify-center text-[11px] font-bold shrink-0">
+            {current.author
+              .split(' ')
+              .map((w) => w[0])
+              .slice(0, 2)
+              .join('')
+              .toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-foreground truncate">{current.author}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{current.authorTitle}</p>
           </div>
         </div>
       </div>

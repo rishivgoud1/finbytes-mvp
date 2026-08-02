@@ -34,6 +34,7 @@ export interface Video {
   duration: string;
   date: string;
   thumbnail: string;
+  category?: string;
 }
 
 // ============================================
