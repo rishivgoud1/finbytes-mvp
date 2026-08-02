@@ -481,7 +481,7 @@ export const ARTICLES: Article[] = [
     authorTitle: "Market Intelligence",
     date: "August 2, 2026",
     readTime: "3 min read",
-    image: "/images/india-semiconductor-mission.jpeg",
+    image: "/images/india-chip-modi.jpeg",
     body: [
       "For decades, India became a global leader in software. Today, it is aiming to become a significant player in semiconductors — the foundation of modern technology. Chips power smartphones, electric vehicles, defense systems, AI data centers, and industrial automation, making them a strategic asset for every nation.",
       "Through policy support, global partnerships, and manufacturing investments, India is strengthening its semiconductor ecosystem. The goal is not only to reduce import dependence but also to become a trusted global manufacturing hub.",
@@ -489,6 +489,107 @@ export const ARTICLES: Article[] = [
       {
         type: "pullquote" as const,
         text: "Power Insight: In the digital age, nations that build chips don't just manufacture technology — they shape economic growth, national security, and global influence.",
+      },
+    ],
+  },
+  {
+    id: 21,
+    slug: "fed-holds-rates-what-comes-next",
+    product: "Finbytes of the Day",
+    tag: "TODAY'S EDITION",
+    title:
+      "The Fed Held Rates. Markets Rallied. But the Real Story Is What Comes Next.",
+    subtitle:
+      "A pause gives investors clarity today — the decisions that matter are the ones still ahead",
+    excerpt:
+      "The Federal Reserve kept interest rates unchanged, giving investors clarity after a period of uncertainty. Markets welcomed it — but the decision is less about today's rally than about what happens next.",
+    author: "Finbytes Desk",
+    authorTitle: "Daily Briefing",
+    date: "August 2, 2026",
+    readTime: "3 min read",
+    image: "/images/fed-holds-rates.jpeg",
+    body: [
+      "The Federal Reserve in the United States kept interest rates the same, which brought clarity for investors after a period of not knowing what to expect. The markets welcomed the news. Equities rose because investors concluded that the cost of borrowing may not climb any higher.",
+      "But the decision is not really about why markets rose today — it is about what happens tomorrow.",
+      "When the Federal Reserve stops moving interest rates, it signals that inflation is improving. Policymakers, however, remain watchful about weaknesses in the wider economy. What happens next with inflation, employment and consumer spending will determine the Fed's following move.",
+      {
+        type: "pullquote" as const,
+        text: "For companies, the task is unchanged: keep balancing investment in growth against discipline with capital.",
+      },
+    ],
+  },
+  {
+    id: 22,
+    slug: "ai-arms-race-competing-for-algorithms",
+    product: "Decode",
+    title:
+      "The AI Arms Race: Why Nations Are Competing for Algorithms, Not Just Weapons",
+    subtitle:
+      "The defining strategic technology of the century is measured in data, compute and semiconductors",
+    excerpt:
+      "Artificial Intelligence has become the defining strategic technology of the 21st century. Unlike previous military revolutions driven by firepower, today's competition is centered on data, computing power, semiconductor technology, and advanced algorithms.",
+    author: "Finbytes Decode",
+    authorTitle: "Analysis Desk",
+    date: "August 2, 2026",
+    readTime: "4 min read",
+    image: "/images/ai-arms-race.jpeg",
+    body: [
+      "Artificial Intelligence has become the defining strategic technology of the 21st century. Unlike previous military revolutions driven by firepower, today's competition is centered on data, computing power, semiconductor technology, and advanced algorithms.",
+      "Governments worldwide are investing billions in autonomous drones, AI-powered surveillance, cyber defense, intelligence analysis, and battlefield decision-support systems. The United States, China, and several European nations view AI as a cornerstone of national security and economic competitiveness.",
+      "However, the AI race extends far beyond the military. The country that leads in AI will likely shape global standards, supply chains and economic advantage for a generation.",
+      {
+        type: "pullquote" as const,
+        text: "Finbytes Decode: The contest for advantage has moved from firepower to compute — and the winners will set the rules everyone else follows.",
+      },
+    ],
+  },
+  {
+    id: 23,
+    slug: "new-arms-economy-defense-innovation",
+    product: "Decode",
+    title:
+      "The New Arms Economy: How Defense Innovation Is Reshaping Global Markets",
+    subtitle:
+      "Military spending is expanding beyond hardware into drones, cyber, satellites and AI systems",
+    excerpt:
+      "The global defense industry is undergoing a significant transformation. Traditional military spending is expanding beyond tanks, fighter jets, and missiles to include drones, cyber warfare, satellite intelligence, quantum technologies, and AI-enabled defense systems.",
+    author: "Finbytes Decode",
+    authorTitle: "Analysis Desk",
+    date: "August 2, 2026",
+    readTime: "4 min read",
+    image: "/images/new-arms-economy.jpeg",
+    body: [
+      "The global defense industry is undergoing a significant transformation. Traditional military spending is expanding beyond tanks, fighter jets, and missiles to include drones, cyber warfare, satellite intelligence, quantum technologies, and AI-enabled defense systems.",
+      "Governments are increasing defense budgets in response to geopolitical tensions, creating new opportunities for technology companies and defense startups. Private investment in dual-use technologies — innovations that serve both civilian and military purposes — is also rising rapidly.",
+      "This shift is redefining the relationship between national security and economic growth. Countries with strong research ecosystems, advanced manufacturing, and resilient supply chains are better positioned to lead the next generation of defense innovation.",
+      {
+        type: "pullquote" as const,
+        text: "Finbytes Decode: Modern defense is no longer defined solely by weapons. It is increasingly powered by software, artificial intelligence, innovation ecosystems, and strategic partnerships that shape both security and economic influence.",
+      },
+    ],
+  },
+  {
+    id: 24,
+    slug: "india-manufacturing-moment-made-for-the-world",
+    product: "Strategy Room",
+    title:
+      "India's Manufacturing Moment: Can 'Make in India' Become 'Made for the World'?",
+    subtitle:
+      "Supply chains are diversifying — but incentives alone will not deliver manufacturing leadership",
+    excerpt:
+      "India is steadily positioning itself as a global manufacturing hub. With supply chains diversifying beyond China, multinational companies are expanding operations across electronics, semiconductors, renewable energy, pharmaceuticals, and defense manufacturing.",
+    author: "Finbytes Strategy Room",
+    authorTitle: "Strategy Desk",
+    date: "August 2, 2026",
+    readTime: "4 min read",
+    image: "/images/india-semiconductor-mission.jpeg",
+    body: [
+      "India is steadily positioning itself as a global manufacturing hub. With supply chains diversifying beyond China, multinational companies are expanding operations across electronics, semiconductors, renewable energy, pharmaceuticals, and defense manufacturing. Government initiatives such as the Production Linked Incentive (PLI) scheme, infrastructure expansion, and digital governance have strengthened India's investment appeal.",
+      "Yet manufacturing leadership requires more than incentives. India must improve logistics efficiency, workforce skills, research and development, and ease of doing business. Building globally competitive supply chains and supporting MSMEs will be equally critical.",
+      "The coming decade offers India a rare opportunity to become a trusted manufacturing partner for the world. Success will depend on execution, innovation, and policy consistency.",
+      {
+        type: "pullquote" as const,
+        text: "Strategy Insight: India's competitive advantage will be decided less by incentives than by execution — logistics, skills and policy consistency are what turn opportunity into national growth.",
       },
     ],
   },

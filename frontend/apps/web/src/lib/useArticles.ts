@@ -44,9 +44,16 @@ function hashId(id: string): number {
  * Falls back silently to local content if the API is unavailable, so the
  * site never breaks because the backend is down.
  */
+/** Newest first, by the article's display date. */
+function byNewest(a: Article, b: Article): number {
+  return (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0);
+}
+
 export function useArticles(category?: Product) {
   const [articles, setArticles] = useState<Article[]>(
-    category ? ARTICLES.filter((a) => a.product === category) : ARTICLES
+    (category ? ARTICLES.filter((a) => a.product === category) : ARTICLES)
+      .slice()
+      .sort(byNewest)
   );
   const [loading, setLoading] = useState(true);
 
@@ -57,15 +64,15 @@ export function useArticles(category?: Product) {
       .articles(category)
       .then((res) => {
         if (cancelled) return;
-        const local = category
-          ? ARTICLES.filter((a) => a.product === category)
-          : ARTICLES;
+        const local = (
+          category ? ARTICLES.filter((a) => a.product === category) : ARTICLES
+        ).slice();
 
         if (res.success && res.data && res.data.length > 0) {
           const fromDb = res.data.map(publicToArticle);
-          setArticles([...fromDb, ...local]);
+          setArticles([...fromDb, ...local].sort(byNewest));
         } else {
-          setArticles(local);
+          setArticles(local.sort(byNewest));
         }
       })
       .catch(() => {

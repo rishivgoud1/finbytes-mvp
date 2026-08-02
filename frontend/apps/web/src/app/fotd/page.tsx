@@ -6,7 +6,13 @@ import { useArticles } from '@/lib/useArticles';
 
 export default function FinbytesOfTheDayPage() {
   const { articles: ARTICLES } = useArticles();
-  const edition = ARTICLES.find((a) => a.product === 'Finbytes of the Day') ?? ARTICLES[0];
+  // Show the most recent edition, not simply the first in the list.
+  const edition =
+    [...ARTICLES]
+      .filter((a) => a.product === 'Finbytes of the Day')
+      .sort(
+        (a, b) => (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0)
+      )[0] ?? ARTICLES[0];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
